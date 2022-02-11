@@ -1,0 +1,4 @@
+
+yosys -p 'synth_ice40 -top top -json hardware.json' -S top.v mmc.v hera.v
+nextpnr-ice40 --lp8k --pcf pins.pcf --package cm81 --asc hardware.asc --json hardware.json -r
+icepack hardware.asc hardware.bin
