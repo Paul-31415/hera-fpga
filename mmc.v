@@ -187,11 +187,11 @@ module mmc(
   // S     - step
   // h     - run
   // r     - reset
-  // O**   - step imm opcode
+  // O**   - imm opcode
   //
   // D     - debugger read
   //  r*   -               register n
-  //  f    -               flags&opc (23 bits zero padded to 24)
+  //  f    -               flags&opcode (23 bits zero padded to 24)
   //  m    -               mmc flags/values
   wire [23:0] debug_m = {1'b1,step,step_r,run,hclk,res,imm_op,imm_op_r,op};
   assign spi_miso = spi_cmd[63];
@@ -223,7 +223,7 @@ module mmc(
              //rreq[0] <= !rreq[0];
              spi_cmd <= sc;
        end
-       {32'h0,"R",16'h????,8'h?}: begin
+       {32'h0,"R",16'h????,8'h??}: begin
              //spi_cmd <= {nready[0],s_rdata,47'h0};
              spi_cmd <= {s_rdata,48'h0};
        end
