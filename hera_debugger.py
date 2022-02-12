@@ -71,22 +71,9 @@ class Hera_Debugger:
 
         
         
-    def debug(self):
-        #set up print timer and stuff (will do later)
+    def debug(self):        
+        self.do_state()
 
-        #computer debugging workaround to make stdin behave like it does on the pyboard
-        # (from https://code.activestate.com/recipes/134892-getch-like-unbuffered-character-reading-from-stdin/)
-        import sys, tty, termios
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        try:
-            tty.setraw(sys.stdin.fileno())
-            #synchronous for testing on computer python
-            self.do_state()
-        finally:
-            #restore io settings
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-            #turn off timer and callback (will do later)
         
 
 
@@ -267,11 +254,20 @@ class dummy_hera_comm: #for debugging
         return self._mem[i%8192]
     def __setitem__(self,i,v):
         self._mem[i&8192]=v&0xffff
-    
+
+
+
+class workaround:
+    def __init__(self):
+        pass
+    def read(self,n):
+        return ''.join((getch() for i in range(n)))
+        
+
 h = dummy_hera_comm()
 
 
-hd = Hera_Debugger(h)
+hd = Hera_Debugger(h,workaround())
 
 
 
@@ -285,5 +281,42 @@ hd = Hera_Debugger(h)
 
 
 
+#from https://code.activestate.com/recipes/134892-getch-like-unbuffered-character-reading-from-stdin/
+class _Getch:
+    """Gets a single character from standard input.  Does not echo to the
+screen."""
+    def __init__(self):
+        try:
+            self.impl = _GetchWindows()
+        except ImportError:
+            self.impl = _GetchUnix()
+
+    def __call__(self): return self.impl()
 
 
+class _GetchUnix:
+    def __init__(self):
+        import tty, sys
+
+    def __call__(self):
+        import sys, tty, termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+
+
+class _GetchWindows:
+    def __init__(self):
+        import msvcrt
+
+    def __call__(self):
+        import msvcrt
+        return msvcrt.getch()
+
+
+getch = _Getch()
